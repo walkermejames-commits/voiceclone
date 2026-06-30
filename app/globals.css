@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #111218;
+  --bg-deep: #0a0c10;
+  --panel: rgba(22, 25, 33, 0.86);
+  --panel-soft: rgba(17, 20, 28, 0.92);
+  --panel-strong: rgba(14, 16, 22, 0.98);
+  --line: rgba(142, 152, 177, 0.18);
+  --line-strong: rgba(179, 188, 211, 0.38);
+  --text-main: #f2eee6;
+  --text-soft: #c1bcaf;
+  --text-dim: #8b8a86;
+  --accent: #a98f6d;
+  --accent-strong: #c9b08c;
+  --accent-ink: #120f0c;
+}
+
+@theme inline {
+  --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(169, 143, 109, 0.14), transparent 26%),
+    radial-gradient(circle at right 12%, rgba(95, 113, 132, 0.12), transparent 22%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+  color: var(--text-main);
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+textarea {
+  resize: vertical;
+}
+
+audio {
+  width: 100%;
+  height: 40px;
+  filter: saturate(0.75);
+}
+
+::selection {
+  background: rgba(169, 143, 109, 0.28);
+}
