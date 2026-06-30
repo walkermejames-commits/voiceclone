@@ -4,7 +4,16 @@ import path from "node:path";
 const DATA_ROOT = path.join(process.cwd(), "data");
 export const PROJECTS_ROOT = path.join(DATA_ROOT, "projects");
 
+const PROJECT_ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,80}$/;
+
+export function validateProjectId(projectId: string) {
+  if (!PROJECT_ID_PATTERN.test(projectId)) {
+    throw new Error("Invalid project id");
+  }
+}
+
 export function projectDir(projectId: string) {
+  validateProjectId(projectId);
   return path.join(PROJECTS_ROOT, projectId);
 }
 
@@ -70,9 +79,10 @@ export function sanitizeFileSegment(value: string) {
 }
 
 export function safeProjectPath(projectId: string, relativePath: string) {
-  const fullPath = path.normalize(path.join(projectDir(projectId), relativePath));
-  const root = projectDir(projectId);
-  if (!fullPath.startsWith(root)) {
+  const root = path.resolve(projectDir(projectId));
+  const fullPath = path.resolve(root, relativePath);
+  const relation = path.relative(root, fullPath);
+  if (relation.startsWith("..") || path.isAbsolute(relation)) {
     throw new Error("Invalid project path");
   }
   return fullPath;

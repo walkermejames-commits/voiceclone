@@ -1003,6 +1003,9 @@ export function ProjectStudio({
             </Field>
             <Field label="Voice">
               <Select value={draftProject.narrator.voice} onChange={(event) => updateNarratorField("voice", event.target.value)}>
+                {voices.length === 0 ? (
+                  <option value={draftProject.narrator.voice}>No Windows voices found</option>
+                ) : null}
                 {voices.map((voice) => (
                   <option key={voice} value={voice}>
                     {voice}

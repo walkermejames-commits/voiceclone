@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import uuid
 from pathlib import Path
 from typing import Optional
@@ -31,6 +32,15 @@ app.add_middleware(
 )
 
 _tts: Optional[TTS] = None
+
+
+def safe_upload_name(filename: str | None) -> str:
+    raw_name = Path(filename or "sample.wav").name
+    stem = re.sub(r"[^A-Za-z0-9._-]+", "-", Path(raw_name).stem).strip(".-") or "sample"
+    suffix = Path(raw_name).suffix.lower()
+    if suffix not in {".wav", ".mp3", ".m4a", ".flac"}:
+        suffix = ".wav"
+    return f"{stem[:80]}{suffix}"
 
 
 class GenerateRequest(BaseModel):
@@ -106,7 +116,7 @@ async def create_voice(
 
     for sample in samples:
         content = await sample.read()
-        (voice_dir / sample.filename).write_bytes(content)
+        (voice_dir / safe_upload_name(sample.filename)).write_bytes(content)
 
     (voice_dir / "meta.txt").write_text(f"name={name}\nnotes={notes}\n", encoding="utf-8")
     return JSONResponse(
@@ -127,7 +137,7 @@ async def add_voice_sample(
     require_token(x_chipvoice_token)
     voice_dir = get_voice_dir(voice_id)
     content = await sample.read()
-    (voice_dir / sample.filename).write_bytes(content)
+    (voice_dir / safe_upload_name(sample.filename)).write_bytes(content)
     return JSONResponse({"ok": True})
 
 

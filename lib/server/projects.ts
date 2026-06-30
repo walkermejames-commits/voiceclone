@@ -13,7 +13,7 @@ import {
   generateAnnotatedScript,
 } from "@/lib/server/performance-script";
 import { dictionaryToLines, parseDictionaryInput, parseManuscriptToChapters } from "@/lib/server/parser";
-import { listInstalledVoices, synthesizeToWav } from "@/lib/server/narrator";
+import { NarratorError, getNarratorStatus, listInstalledVoices, synthesizeToWav } from "@/lib/server/narrator";
 import {
   annotatedScriptFile,
   ensureProjectScaffold,
@@ -237,10 +237,15 @@ async function loadProjectRecord(projectId: string): Promise<ProjectRecord> {
 export async function getVoices() {
   const voices = await listInstalledVoices();
   if (voices.length === 0) {
-    throw new Error("No Windows narrator voices were found.");
+    throw new NarratorError(
+      "No Windows narrator voices were found. Install a Windows speech voice, then restart the dev server.",
+      "no-voices",
+    );
   }
   return voices;
 }
+
+export { getNarratorStatus };
 
 export async function listProjects() {
   const ids = await listProjectIds();
@@ -401,11 +406,18 @@ function allowedReferenceAsset(fileName: string) {
   return extension === ".mp3" || extension === ".wav" || extension === ".m4a";
 }
 
+const MAX_REFERENCE_ASSET_BYTES = 250 * 1024 * 1024;
+const MAX_RECORDING_BYTES = 500 * 1024 * 1024;
+
 export async function uploadReferenceNarrationAsset(projectId: string, formData: FormData) {
   const project = await getProject(projectId);
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     throw new Error("Choose an audio file to upload.");
+  }
+
+  if (file.size > MAX_REFERENCE_ASSET_BYTES) {
+    throw new Error("Reference narration uploads are limited to 250 MB.");
   }
 
   if (!allowedReferenceAsset(file.name)) {
@@ -596,6 +608,10 @@ export async function saveRecordingTake(
     buffer: Buffer;
   },
 ) {
+  if (payload.buffer.byteLength > MAX_RECORDING_BYTES) {
+    throw new Error("Booth recordings are limited to 500 MB per take.");
+  }
+
   const project = await getProject(projectId);
   const chapter = locateChapter(project, payload.chapterId);
   const relatedLine =

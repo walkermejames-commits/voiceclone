@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { ProjectStudio } from "@/components/project-studio";
-import { Badge, LinkButton } from "@/components/ui";
-import { getProject, getVoices } from "@/lib/server/projects";
+import { Badge, LinkButton, Panel } from "@/components/ui";
+import { getNarratorStatus, getProject } from "@/lib/server/projects";
 
 export default async function ProjectPage({
   params,
@@ -11,12 +11,12 @@ export default async function ProjectPage({
 }) {
   const { id } = await params;
 
-  const data = await Promise.all([getProject(id), getVoices()]).catch(() => null);
-  if (!data) {
+  const project = await getProject(id).catch(() => null);
+  if (!project) {
     notFound();
   }
 
-  const [project, voices] = data;
+  const narratorStatus = await getNarratorStatus();
 
   return (
     <main className="mx-auto max-w-[1720px] px-6 py-8 md:px-8">
@@ -29,7 +29,21 @@ export default async function ProjectPage({
           Project files live in <code>data/projects/{project.id}</code>, with annotated scripts under <code>annotated-script</code> and booth takes under <code>recordings</code>
         </p>
       </div>
-      <ProjectStudio project={project} voices={voices} />
+      {!narratorStatus.ok ? (
+        <Panel className="mb-6 border-yellow-500/40 bg-yellow-950/20">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.24em] text-yellow-200">Narrator setup needed</p>
+              <h2 className="mt-2 font-serif text-2xl text-[var(--text-main)]">Windows voices are not ready</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--text-soft)]">
+                {narratorStatus.message}
+              </p>
+            </div>
+            <LinkButton href="/health" tone="secondary">Open health check</LinkButton>
+          </div>
+        </Panel>
+      ) : null}
+      <ProjectStudio project={project} voices={narratorStatus.voices} />
     </main>
   );
 }
